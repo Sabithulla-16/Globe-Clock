@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Globe Clock — Time, calendar & holidays by country">
+    <meta name="theme-color" content="#0d0d12">
+    <title>Globe Clock</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <!-- Manifest only when served over http(s) to avoid CORS with file:// -->
+    <script>
+      (function() {
+        var p = window.location.protocol;
+        if (p === 'http:' || p === 'https:') {
+          var l = document.createElement('link');
+          l.rel = 'manifest';
+          l.href = 'manifest.json';
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app-loading" class="app-loading" aria-hidden="false">
+        <div class="app-loading-content">
+            <div class="app-loading-spinner"></div>
+            <p class="app-loading-text">Loading...</p>
+        </div>
+    </div>
+    <div class="bg-gradient" id="bgGradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-top">
+                <div class="header-left">
+                    <div class="header-brand">
+                        <img class="header-logo" src="icon.svg" alt="Globe Clock">
+                        <h1 class="header-title">Globe Clock</h1>
+                    </div>
+                    <p class="header-subtitle">Time, season & holidays worldwide</p>
+                </div>
+                <div class="header-controls">
+                    <button type="button" id="clockModeBtn" class="icon-btn" title="Toggle analog/digital clock">
+                        <span class="icon" id="clockModeIcon">🕒</span>
+                        <span class="label" id="clockModeLabel">Digital</span>
+                    </button>
+                    <button type="button" id="themeToggle" class="icon-btn" title="Toggle theme">
+                        <span class="icon" id="themeIcon">🌓</span>
+                        <span class="label" id="themeLabel">Auto</span>
+                    </button>
+                    <button type="button" id="shareBtn" class="icon-btn" title="Share">
+                        <span class="icon">🔗</span>
+                        <span class="label">Share</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Favorites Section -->
+            <section class="favorites-section" id="favoritesSection" style="display: none;">
+                <div class="favorites-header">
+                    <h3>⭐ Favorite Cities</h3>
+                </div>
+                <div class="favorites-grid" id="favoritesGrid"></div>
+            </section>
+
+            <section class="hero-card">
+                <div class="country-info">
+                    <span class="flag-emoji" id="flagEmoji" aria-hidden="true"></span>
+                    <h2 class="country-name" id="countryName">Select a country</h2>
+                    <button type="button" id="favoriteBtn" class="favorite-btn" title="Add to favorites" style="display: none;">
+                        <span id="favoriteIcon">☆</span>
+                    </button>
+                </div>
+                <div class="time-block">
+                    <div class="clock-container">
+                        <div class="digital-clock" id="digitalClock">
+                            <div class="time" id="currentTime" aria-live="polite">--:--:--</div>
+                        </div>
+                        <div class="analog-clock" id="analogClock" style="display: none;">
+                            <div class="clock-face">
+                                <div class="clock-number" style="--number: 1">1</div>
+                                <div class="clock-number" style="--number: 2">2</div>
+                                <div class="clock-number" style="--number: 3">3</div>
+                                <div class="clock-number" style="--number: 4">4</div>
+                                <div class="clock-number" style="--number: 5">5</div>
+                                <div class="clock-number" style="--number: 6">6</div>
+                                <div class="clock-number" style="--number: 7">7</div>
+                                <div class="clock-number" style="--number: 8">8</div>
+                                <div class="clock-number" style="--number: 9">9</div>
+                                <div class="clock-number" style="--number: 10">10</div>
+                                <div class="clock-number" style="--number: 11">11</div>
+                                <div class="clock-number" style="--number: 12">12</div>
+                                <div class="hand hour-hand" id="hourHand"></div>
+                                <div class="hand minute-hand" id="minuteHand"></div>
+                                <div class="hand second-hand" id="secondHand"></div>
+                                <div class="clock-center"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="date" id="currentDate">--</div>
+                    <div class="meta-grid">
+                        <div class="meta-item meta-item-date">
+                            <span class="meta-label">Current Date</span>
+                            <span class="current-date-meta" id="currentDateMeta">--</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Timezone</span>
+                            <span class="timezone" id="timezone">--</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">UTC Offset</span>
+                            <span class="utc-offset" id="utcOffset">--</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Season</span>
+                            <span class="season" id="seasonValue">--</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Time Difference</span>
+                            <span class="time-diff" id="timeDiff">--</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Dial Code</span>
+                            <span class="dial-code" id="dialCode">--</span>
+                        </div>
+                    </div>
+                    <div class="sun-times" id="sunTimes" style="display: none;">
+                        <div class="sun-item">
+                            <div>
+                                <div class="sun-label">Sunrise</div>
+                                <div class="sun-time" id="sunriseTime">--:--</div>
+                            </div>
+                        </div>
+                        <div class="sun-item">
+                            <div>
+                                <div class="sun-label">Sunset</div>
+                                <div class="sun-time" id="sunsetTime">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="tabs">
+                    <button type="button" class="tab-btn active" data-tab="map">Map</button>
+                    <button type="button" class="tab-btn" data-tab="list">List</button>
+                    <button type="button" class="tab-btn" data-tab="calendar">Calendar</button>
+                    <button type="button" class="tab-btn" data-tab="compare">Compare</button>
+                    <button type="button" class="tab-btn" data-tab="widget">Widget</button>
+                    <button type="button" class="tab-btn" data-tab="api">API</button>
+                </div>
+
+                <div class="tab-content active" id="mapTab">
+                    <div id="mapWrap" class="map-wrap">
+                        <div id="map"></div>
+                        <div id="mapTerminator" class="map-terminator" aria-hidden="true"></div>
+                        <p class="map-hint">Tap a marker to see time & holidays</p>
+                    </div>
+                    <div id="mapOffline" class="map-offline hidden">
+                        <p class="map-offline-title">Map needs connection</p>
+                        <p class="map-offline-desc">Use the list below to pick a country while offline.</p>
+                        <div id="mapOfflineList" class="map-offline-list"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="listTab">
+                    <input type="search" id="countrySearch" class="search-input" placeholder="Search country..." aria-label="Search countries">
+                    <div class="country-list" id="countryList" role="list"></div>
+                </div>
+
+                <div class="tab-content" id="calendarTab">
+                    <div class="calendar-toolbar">
+                        <button type="button" class="cal-nav" id="prevMonth" aria-label="Previous month">←</button>
+                        <h3 class="cal-title" id="calendarMonthYear"></h3>
+                        <button type="button" class="cal-nav" id="nextMonth" aria-label="Next month">→</button>
+                    </div>
+                    <div class="calendar-view-toggle">
+                        <button type="button" class="view-toggle-btn active" data-view="country">Country</button>
+                        <button type="button" class="view-toggle-btn" data-view="global">Global</button>
+                    </div>
+                    <p class="cal-hint" id="calendarHint">Holidays for selected country — same as time above</p>
+                    <div class="calendar-wrap">
+                        <div id="calendar-loading" class="calendar-loading" aria-hidden="true">
+                            <div class="calendar-loading-spinner"></div>
+                            <span>Loading holidays...</span>
+                        </div>
+                        <div class="calendar" id="calendar" role="grid"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="compareTab">
+                    <p class="panel-hint">Select multiple countries to compare timezones side-by-side</p>
+                    <div class="compare-search-wrapper">
+                        <input type="search" id="compareSearch" class="search-input" placeholder="Search to add countries..." aria-label="Search countries to compare">
+                        <div id="compareDropdown" class="compare-dropdown" style="display: none;"></div>
+                    </div>
+                    <div class="comparison-controls">
+                        <button type="button" id="addComparisonBtn" class="comparison-btn" disabled>Add to Comparison</button>
+                        <button type="button" id="clearComparisonBtn" class="comparison-btn secondary">Clear All</button>
+                        <button type="button" id="showCompareDetailsBtn" class="comparison-btn" style="display: none;">Show Comparison Details</button>
+                    </div>
+                    <div id="comparisonGrid" class="comparison-grid"></div>
+                    <div id="comparisonDetails" class="comparison-details" style="display: none;"></div>
+                </div>
+
+                <div class="tab-content" id="widgetTab">
+                    <p class="panel-hint">Embed a world clock widget on your website</p>
+                    <div class="widget-config">
+                        <div class="widget-country-select">
+                            <label for="widgetCountrySelect">Select Country:</label>
+                            <select id="widgetCountrySelect" class="widget-select"></select>
+                        </div>
+                        <div class="widget-options">
+                            <label>Clock Type:</label>
+                            <label>
+                                <input type="radio" name="widgetClockType" value="digital" checked> Digital Clock
+                            </label>
+                            <label>
+                                <input type="radio" name="widgetClockType" value="analog"> Analog Clock
+                            </label>
+                        </div>
+                        <div class="widget-theme-select">
+                            <label>Theme:</label>
+                            <label>
+                                <input type="radio" name="widgetTheme" value="auto" checked> Auto (Time-based)
+                            </label>
+                            <label>
+                                <input type="radio" name="widgetTheme" value="light"> Light
+                            </label>
+                            <label>
+                                <input type="radio" name="widgetTheme" value="dark"> Dark
+                            </label>
+                        </div>
+                    </div>
+                    <div class="widget-preview" id="widgetPreview"></div>
+                    <div class="widget-code-section">
+                        <h4>Embed Code</h4>
+                        <textarea id="widgetEmbedCode" class="widget-code" readonly rows="6"></textarea>
+                        <button type="button" id="copyWidgetBtn" class="copy-btn">Copy Code</button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="apiTab">
+                    <p class="panel-hint">globeclock API — free JSON endpoints and widget URL</p>
+                    <div class="api-config">
+                        <div class="api-group">
+                            <h4>Timezone API</h4>
+                            <div class="widget-country-select">
+                                <label for="apiTimezoneSelect">Select Timezone:</label>
+                                <select id="apiTimezoneSelect" class="widget-select"></select>
+                            </div>
+                        </div>
+                        <div class="api-group">
+                            <h4>Widget URL</h4>
+                            <div class="widget-country-select">
+                                <label for="apiWidgetTimezoneSelect">Select Timezone:</label>
+                                <select id="apiWidgetTimezoneSelect" class="widget-select"></select>
+                            </div>
+                            <div class="widget-options api-widget-options">
+                                <label>Clock Type:</label>
+                                <label>
+                                    <input type="radio" name="apiWidgetClockType" value="digital" checked> Digital Clock
+                                </label>
+                                <label>
+                                    <input type="radio" name="apiWidgetClockType" value="analog"> Analog Clock
+                                </label>
+                            </div>
+                            <div class="widget-theme-select api-widget-theme">
+                                <label>Theme:</label>
+                                <label>
+                                    <input type="radio" name="apiWidgetTheme" value="auto" checked> Auto
+                                </label>
+                                <label>
+                                    <input type="radio" name="apiWidgetTheme" value="light"> Light
+                                </label>
+                                <label>
+                                    <input type="radio" name="apiWidgetTheme" value="dark"> Dark
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="api-endpoints">
+                        <div class="widget-code-section">
+                            <h4>Timezone (full)</h4>
+                            <textarea id="apiTimezoneUrl" class="widget-code" readonly rows="2"></textarea>
+                            <button type="button" class="copy-btn" data-copy-target="apiTimezoneUrl">Copy URL</button>
+                        </div>
+                        <div class="widget-code-section">
+                            <h4>Time (simple)</h4>
+                            <textarea id="apiTimeUrl" class="widget-code" readonly rows="2"></textarea>
+                            <button type="button" class="copy-btn" data-copy-target="apiTimeUrl">Copy URL</button>
+                        </div>
+                        <div class="widget-code-section">
+                            <h4>Timezones list</h4>
+                            <textarea id="apiListUrl" class="widget-code" readonly rows="2"></textarea>
+                            <button type="button" class="copy-btn" data-copy-target="apiListUrl">Copy URL</button>
+                        </div>
+                        <div class="widget-code-section">
+                            <h4>Widget URL</h4>
+                            <textarea id="apiWidgetUrl" class="widget-code" readonly rows="2"></textarea>
+                            <button type="button" class="copy-btn" data-copy-target="apiWidgetUrl">Copy URL</button>
+                        </div>
+                        <div class="widget-code-section">
+                            <h4>Widget API (JSON)</h4>
+                            <textarea id="apiWidgetJsonUrl" class="widget-code" readonly rows="2"></textarea>
+                            <button type="button" class="copy-btn" data-copy-target="apiWidgetJsonUrl">Copy URL</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Time & holidays worldwide — works offline</p>
+            <button type="button" id="installBtn" class="install-btn" style="display: none;">Install app</button>
+        </footer>
+    </div>
+
+    <div id="offline-banner" class="offline-banner" aria-hidden="true" role="status">You're offline — using cached data</div>
+    <div id="file-protocol-banner" class="file-protocol-banner" aria-hidden="true" role="status">
+        Calendar holidays need a local server. In this folder run: <code>npx serve .</code> then open <code>http://localhost:3000</code>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        const desktopQuery = window.matchMedia('(min-width: 769px)');
+        const updateInstallVisibility = () => {
+            if (!installBtn) return;
+            if (desktopQuery.matches && deferredPrompt) {
+                installBtn.style.display = 'inline-flex';
+            } else {
+                installBtn.style.display = 'none';
+            }
+        };
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            updateInstallVisibility();
+        });
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    updateInstallVisibility();
+                }
+            });
+        }
+        if (desktopQuery.addEventListener) {
+            desktopQuery.addEventListener('change', updateInstallVisibility);
+        } else if (desktopQuery.addListener) {
+            desktopQuery.addListener(updateInstallVisibility);
+        }
+        window.addEventListener('online', () => document.getElementById('offline-banner').setAttribute('aria-hidden', 'true'));
+        window.addEventListener('offline', () => { document.getElementById('offline-banner').setAttribute('aria-hidden', 'false'); });
+        if (window.location.protocol === 'file:') {
+            document.getElementById('file-protocol-banner').setAttribute('aria-hidden', 'false');
+        }
+    </script>
+</body>
+</html>

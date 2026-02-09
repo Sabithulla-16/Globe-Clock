@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Clock API Test - Third Party Consumer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .api-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .api-info h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .api-info code {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 5px;
+            display: block;
+            font-size: 12px;
+            word-break: break-all;
+            color: #495057;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .time-display {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .flag {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .time {
+            font-size: 56px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .date {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-card label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-card value {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .json-response {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .json-response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Global Clock API Test</h1>
+            <p>Third-party API consumer demonstration</p>
+        </div>
+
+        <div class="api-info">
+            <h3>📡 API Endpoint (Netlify Function)</h3>
+            <code>https://globeclock.netlify.app/.netlify/functions/timezone?tz=Asia/Kolkata</code>
+        </div>
+
+        <div id="status" class="status loading">⏳ Connecting to API...</div>
+
+        <div class="time-display">
+            <div class="flag" id="flag">🇮🇳</div>
+            <div class="time" id="time">--:--:--</div>
+            <div class="date" id="date">--/--/----</div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <label>Timezone</label>
+                <value id="timezone">Loading...</value>
+            </div>
+            <div class="info-card">
+                <label>Country</label>
+                <value id="country">Loading...</value>
+            </div>
+            <div class="info-card">
+                <label>UTC Offset</label>
+                <value id="utc-offset">Loading...</value>
+            </div>
+            <div class="info-card">
+                <label>Dialing Code</label>
+                <value id="dial-code">Loading...</value>
+            </div>
+        </div>
+
+        <div class="json-response">
+            <pre id="json-output">Waiting for API response...</pre>
+        </div>
+
+        <div class="footer">
+            This is a standalone third-party application consuming the Global Clock API via Netlify Functions
+        </div>
+    </div>
+
+    <script>
+        // Fetch Indian time from the Global Clock API (Netlify Function)
+        function fetchIndianTime() {
+            // Direct fetch to the Netlify Function - works from anywhere!
+            fetch('https://globeclock.netlify.app/.netlify/functions/timezone?tz=Asia/Kolkata')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(json => {
+                    console.log('API Response:', json);
+
+                    if (json.status === 'success') {
+                        // Update status
+                        const statusEl = document.getElementById('status');
+                        statusEl.textContent = '✅ API Connected (Netlify Function)';
+                        statusEl.className = 'status success';
+                        
+                        // Update time display
+                        document.getElementById('time').textContent = json.current_time;
+                        document.getElementById('date').textContent = json.current_date;
+                        
+                        // Update country info
+                        if (json.country) {
+                            document.getElementById('flag').textContent = json.country.flag || '🇮🇳';
+                            document.getElementById('country').textContent = json.country.name || 'India';
+                            document.getElementById('dial-code').textContent = json.country.dialingCode || '+91';
+                        }
+                        
+                        // Update timezone info
+                        document.getElementById('timezone').textContent = json.timezone;
+                        document.getElementById('utc-offset').textContent = json.utc_offset;
+                        
+                        // Display JSON response
+                        document.getElementById('json-output').textContent = JSON.stringify(json, null, 2);
+                    } else {
+                        throw new Error(json.message || 'API returned error status');
+                    }
+                })
+                .catch(error => {
+                    console.error('API Error:', error);
+                    
+                    const statusEl = document.getElementById('status');
+                    statusEl.textContent = '❌ Connection Failed: ' + error.message;
+                    statusEl.className = 'status error';
+                    
+                    document.getElementById('json-output').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        // Start fetching immediately
+        fetchIndianTime();
+        
+        // Update every second
+        setInterval(fetchIndianTime, 1000);
+    </script>
+</body>
+</html>
