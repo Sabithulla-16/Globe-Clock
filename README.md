@@ -49,9 +49,6 @@ APK Installation: Download the APK, open it on your Android device, allow unknow
 ## 🎯 Use Cases
 Instantly check global timezones, compare time across regions, build timezone-based apps using the API, embed live clock widgets, and automate time-based workflows.
 
-## 📄 License
-MIT License — free to use, modify, and distribute.
-
 ## 👨‍💻 Developer
 Sabithulla  
 GitHub: https://github.com/Sabithulla-16
