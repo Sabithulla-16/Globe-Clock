@@ -1,13 +1,13 @@
 # 🌍 GlobeClock
 [![🌐 Live Website](https://img.shields.io/badge/Live%20Website-Visit-blue)](https://globeclock.netlify.app/)
-[![📲 Download APK](https://img.shields.io/badge/Android-Download%20APK-green)](https://github.com/Sabithulla-16/globeclock/releases/download/v1.0/GlobeClock.apk)
+[![📲 Download APK](https://img.shields.io/badge/Android-Download%20APK-green)](https://github.com/Sabithulla-16/Metal-Price-Visualizer/raw/main/GlobeClock.apk)
 [![📦 PWA](https://img.shields.io/badge/PWA-Installable-orange)](https://globeclock.netlify.app/)
 [![👨‍💻 Developer](https://img.shields.io/badge/Developer-Valtry-purple)](https://github.com/Sabithulla-16)
 
 GlobeClock is a **real-time world clock and timezone utility platform** that lets users and developers work with global time effortlessly 🌍. It is built as a **Progressive Web App (PWA)**, includes **serverless APIs**, **embeddable widgets**, and is also available as an **Android APK**.
 
 🌐 Live Website: https://globeclock.netlify.app/  
-📲 Android APK: https://github.com/Sabithulla-16/globeclock/releases/download/v1.0/GlobeClock.apk  
+📲 Android APK: https://github.com/Sabithulla-16/Metal-Price-Visualizer/raw/main/GlobeClock.apk  
 
 ## ✨ Features
 - 🌍 Real-time global timezone tracking
